@@ -1,7 +1,7 @@
 """
 Run this once.
 Reads  symbol_map.txt              ->  "TICKER": "INSTRUMENT_KEY"
-Writes symbol+sector_map.txt       ->  "TICKER": "INSTRUMENT_KEY|SECTOR"
+Writes symbol+sector_map.txt       ->  "TICKER": "INSTRUMENT_KEY|SECTOR|INDUSTRY|MARKET_CAP"
 """
 
 import re
@@ -30,21 +30,40 @@ pairs = pat.findall(raw)
 if not pairs:
     raise ValueError("No symbol→instrument pairs found in symbol_map.txt")
 
-# ───────────────── 2 · Fetch sector names (with retry + tqdm) ─────────────
+# ───────────────── 2 · Fetch data (sector, industry, market cap) ─────────────
 @retry(wait=wait_exponential(multiplier=1, min=1, max=8),
        stop=stop_after_attempt(5))
-def get_sector(sym: str) -> str:
-    return yf.Ticker(f"{sym}.NS").info.get("sector") or "Unknown"
+def get_info(sym: str):
+    t = yf.Ticker(f"{sym}.NS")
+    info = t.info or {}
+    return {
+        "sector": info.get("sector", "Unknown"),
+        "industry": info.get("industry", "Unknown"),
+        "market_cap": info.get("marketCap", "Unknown")
+    }
 
 out_lines = []
-for sym, instr in tqdm(pairs, desc="Fetching sectors", unit="stk"):
+for sym, instr in tqdm(pairs, desc="Fetching info", unit="stk"):
     try:
-        sector = get_sector(sym)
+        data = get_info(sym)
     except Exception as e:
-        sector = "Unknown"
         print(f"⚠️  {sym}: {e}")
-    out_lines.append(f'"{sym}": "{instr}|{sector}",\n')
-    time.sleep(0.2)        # polite to Yahoo
+        data = {"sector": "Unknown", "industry": "Unknown", "market_cap": "Unknown"}
+
+    # Convert market cap to readable format if numeric
+    mc = data["market_cap"]
+    if isinstance(mc, (int, float)):
+        if mc >= 1e9:
+            mc_str = f"{mc/1e9:.2f}B"
+        elif mc >= 1e6:
+            mc_str = f"{mc/1e6:.2f}M"
+        else:
+            mc_str = str(mc)
+    else:
+        mc_str = str(mc)
+
+    out_lines.append(f'"{sym}": "{instr}|{data["sector"]}|{data["industry"]}|{mc_str}",\n')
+    time.sleep(0.2)  # polite to Yahoo
 
 # ───────────────── 3 · Write the new .txt file ─────────────────
 TXT_OUT.write_text("".join(out_lines), encoding="utf-8")
