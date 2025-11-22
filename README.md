@@ -98,16 +98,21 @@ No .env file or API keys are required—Yahoo data is free and public.
 👤 Author
 Arpit Jain (AJ)
 
+
 License
+
 This project is open source and available for any use(MIT License).
+
 
 Disclaimer
 
 This tool is for educational and research purposes. Always verify the accuracy of data before using it for trading decisions. The authors are not responsible for any financial losses.
 
+
 Contributing
 
 Contributions are welcome! Feel free to:
+
 
 Report bugs
 
@@ -118,6 +123,7 @@ Submit pull requests
 Improve documentation
 
 Support
+
 
 For issues or questions:
 
