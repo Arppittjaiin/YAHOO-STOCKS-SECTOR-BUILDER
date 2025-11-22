@@ -42,11 +42,15 @@ python yahootockssector/build_symbol_map.py
 Make sure symbol_map.txt is present in the same folder as build_symbol_map.py.
 
 Example input (symbol_map.txt)
+
 "TCS": "NSE_EQ|INE467B01029"
+
 "INFY": "NSE_EQ|INE009A01021"
 
 Example output (symbol+sector_map.txt)
+
 "TCS": "NSE_EQ|INE467B01029|Technology|IT Services|13.4T",
+
 "INFY": "NSE_EQ|INE009A01021|Technology|Consulting Services|6.8T",
 
 🛠️ How It Works
