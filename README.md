@@ -55,7 +55,9 @@ Example output (symbol+sector_map.txt)
 
 🛠️ How It Works
 1. Parse Input File
+
 Extracts "TICKER": "INSTRUMENT_KEY" using regex:
+
 pat = r'"(?P<sym>[A-Z0-9\-]+)"\s*:\s*"(?P<instr>[^"]+)"'
 
 2. Fetch Stock Metadata
@@ -64,11 +66,15 @@ For each symbol:
 Calls Yahoo Finance using yfinance.Ticker
 
 Uses retry logic:
+
 @retry(wait=wait_exponential(min=1, max=8), stop=stop_after_attempt(5))
 
 Extracts:
+
 sector
+
 industry
+
 marketCap
 
 3. Format & Write Output
@@ -78,9 +84,13 @@ Converts market cap → B, M
 Writes formatted string to symbol+sector_map.txt
 
 📊 Configuration
+
 File	Purpose
+
 symbol_map.txt	Input mapping ("TICKER": "INSTRUMENT_KEY")
+
 symbol+sector_map.txt	Output enriched mapping
+
 requirements.txt	Python dependencies
 
 No .env file or API keys are required—Yahoo data is free and public.
@@ -92,20 +102,29 @@ License
 This project is open source and available for any use(MIT License).
 
 Disclaimer
-This tool is for educational and research purposes. Always verify data accuracy before using it for trading decisions. The authors are not responsible for any financial losses.
+
+This tool is for educational and research purposes. Always verify the accuracy of data before using it for trading decisions. The authors are not responsible for any financial losses.
 
 Contributing
+
 Contributions are welcome! Feel free to:
 
 Report bugs
+
 Suggest features
+
 Submit pull requests
+
 Improve documentation
+
 Support
 
 For issues or questions:
+
 Check errors.log for detailed error messages
+
 Review this README's troubleshooting section
+
 Open an issue on the repository
 
 
