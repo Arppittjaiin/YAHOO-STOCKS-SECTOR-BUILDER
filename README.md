@@ -1,147 +1,108 @@
-# build_symbol_map
+# 📈 Yahoo Stocks Sector Builder
 
-> **Small utility** to enrich a symbol→instrument mapping with sector names from Yahoo Finance.
+A lightweight Python utility that enriches a list of Indian stock symbols with **sector**, **industry**, and **market-cap** details fetched from Yahoo Finance.  
+It reads an existing `symbol_map.txt` containing `"TICKER": "INSTRUMENT_KEY"` pairs and generates an enhanced file:
 
----
 
-## 🚀 Project overview
-
-`build_symbol_map.py` is a single-file Python utility that:
-
-* Reads an input file `symbol_map.txt` containing symbol→instrument pairs.
-* Queries Yahoo Finance (via `yfinance`) to fetch the sector for each stock ticker (assumes NSE tickers).
-* Writes an output file `symbol+sector_map.txt` where each line contains `"TICKER": "INSTRUMENT_KEY|SECTOR",`.
-
-This script is useful when you maintain a static mapping of tickers to instrument keys and want to augment each entry with the equity sector.
-
-Main technologies: **Python 3**, `yfinance`, `tenacity` (retry), `tqdm` (optional progress bar).
+This tool is useful for analysts, quants, traders, and data engineers who need enriched metadata for NSE-listed stocks.
 
 ---
 
 ## ⚙️ Features
 
-* 📥 Reads symbol→instrument pairs from `symbol_map.txt`.
-* 🌐 Fetches sector information from Yahoo Finance for each ticker (appends `.NS` — NSE market).
-* 🔁 Built-in retry with exponential backoff using `tenacity`.
-* ⏳ Polite rate-limiting (small sleep between requests).
-* 📤 Writes `symbol+sector_map.txt` in the same directory.
-* ⚠️ Graceful fallback to `Unknown` when sector lookup fails.
+- 📄 **Parses input symbol–instrument map** from `symbol_map.txt`
+- 🌐 **Fetches live metadata** from Yahoo Finance via `yfinance`
+- 🔁 **Retry logic** (via `tenacity`) to handle API throttling/failures
+- 📊 **Formats market cap** into readable values (e.g., `12.5B`, `480M`)
+- 📝 **Outputs enriched dataset** as `symbol+sector_map.txt`
+- 🧹 **Polite API pacing** using `time.sleep` to avoid Yahoo rate limits
 
 ---
 
-## 🧠 How it works (brief)
+## 🧠 Tech Stack
 
-1. The input `symbol_map.txt` is parsed using a regular expression that expects lines like:
-
-   ```text
-   "TICKER": "NSE_EQ|ISIN"
-   ```
-
-2. For each ticker (e.g., `SBIN`), the script queries `yfinance.Ticker("SBIN.NS").info["sector"]`.
-
-3. A retry wrapper (`tenacity.retry`) handles transient failures with exponential backoff.
-
-4. Results are written to `symbol+sector_map.txt` as:
-
-   ```text
-   "SBIN": "NSE_EQ|INE12345|Financial Services",
-   ```
+- **Python 3.9+**
+- [`yfinance`](https://pypi.org/project/yfinance/)
+- [`tenacity`](https://pypi.org/project/tenacity/)
+- [`tqdm`](https://pypi.org/project/tqdm/)
+- Standard library: `re`, `pathlib`, `time`
 
 ---
 
-## 🛠️ Installation & setup
-
-Ensure you have Python 3.8 or later installed. From the project directory:
+## 🛠️ Installation & Setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate    # macOS / Linux
-.\.venv\Scripts\activate   # Windows (PowerShell)
-
+git clone https://github.com/Arppittjaiin/YAHOO-STOCKS-SECTOR-BUILDER.git
+cd YAHOO-STOCKS-SECTOR-BUILDER
 pip install -r requirements.txt
 ```
 
-If you prefer to install packages directly:
+python yahootockssector/build_symbol_map.py
 
-```bash
-pip install yfinance tenacity tqdm
-```
+Make sure symbol_map.txt is present in the same folder as build_symbol_map.py.
 
----
+Example input (symbol_map.txt)
+"TCS": "NSE_EQ|INE467B01029"
+"INFY": "NSE_EQ|INE009A01021"
 
-## 🚀 Usage
+Example output (symbol+sector_map.txt)
+"TCS": "NSE_EQ|INE467B01029|Technology|IT Services|13.4T",
+"INFY": "NSE_EQ|INE009A01021|Technology|Consulting Services|6.8T",
 
-Place your `symbol_map.txt` file next to `build_symbol_map.py` and run:
+🛠️ How It Works
+1. Parse Input File
+Extracts "TICKER": "INSTRUMENT_KEY" using regex:
+pat = r'"(?P<sym>[A-Z0-9\-]+)"\s*:\s*"(?P<instr>[^"]+)"'
 
-```bash
-python build_symbol_map.py
-```
+2. Fetch Stock Metadata
 
-Expected output: `symbol+sector_map.txt` containing one enriched mapping per line.
+For each symbol:
+Calls Yahoo Finance using yfinance.Ticker
 
-### Input file format
+Uses retry logic:
+@retry(wait=wait_exponential(min=1, max=8), stop=stop_after_attempt(5))
 
-The script expects `symbol_map.txt` to contain mappings in the following style (JSON-like lines):
+Extracts:
+sector
+industry
+marketCap
 
-```text
-"SBIN": "NSE_EQ|INE123A01013",
-"RELIANCE": "NSE_EQ|INE002A01018",
-```
+3. Format & Write Output
 
-### Output example
+Converts market cap → B, M
 
-```
-"SBIN": "NSE_EQ|INE123A01013|Financial Services",
-```
+Writes formatted string to symbol+sector_map.txt
 
----
+📊 Configuration
+File	Purpose
+symbol_map.txt	Input mapping ("TICKER": "INSTRUMENT_KEY")
+symbol+sector_map.txt	Output enriched mapping
+requirements.txt	Python dependencies
 
-## 🧭 Implementation details
+No .env file or API keys are required—Yahoo data is free and public.
 
-* **Regex parser**: `re.compile(r'"(?P<sym>[A-Z0-9\-]+)"\s*:\s*"(?P<instr>[^\"]+)"')` extracts ticker and instrument key.
-* **Yahoo Finance**: ticker is suffixed with `.NS` to query the National Stock Exchange (India).
-* **Retry**: `tenacity.retry(wait=wait_exponential(...), stop=stop_after_attempt(5))` wraps the API call.
-* **Progress**: If `tqdm` is installed, a progress bar is shown; otherwise, the script falls back to a simple iteration.
-* **Rate limiting**: `time.sleep(0.2)` after every request to be polite to Yahoo's servers.
+👤 Author
+Arpit Jain (AJ)
 
-### Error handling
+License
+This project is open source and available for any use(MIT License).
 
-* Non-fatal network or parsing errors set the sector to `Unknown` and print a warning.
-* If `symbol_map.txt` contains no valid pairs, the script raises `ValueError`.
+Disclaimer
+This tool is for educational and research purposes. Always verify data accuracy before using it for trading decisions. The authors are not responsible for any financial losses.
 
----
+Contributing
+Contributions are welcome! Feel free to:
 
-## 📁 Project structure
+Report bugs
+Suggest features
+Submit pull requests
+Improve documentation
+Support
 
-```
-./
-├─ build_symbol_map.py          # main script (single-file utility)
-├─ symbol_map.txt               # INPUT file (must be provided by you)
-├─ symbol+sector_map.txt        # OUTPUT (generated by the script)
-├─ requirements.txt             # (generated automatically)
-```
+For issues or questions:
+Check errors.log for detailed error messages
+Review this README's troubleshooting section
+Open an issue on the repository
 
----
-
-## 📦 Dependencies (requirements.txt)
-
-```
-yfinance>=0.2.0
-tenacity>=8.0.0
-tqdm>=4.0.0
-```
-
----
-
-
-## 🧑‍💻 Author
-
-Author: Arpit Jain (AJ)
-
----
-
-## 📜 License
-
-MIT License
 
 
