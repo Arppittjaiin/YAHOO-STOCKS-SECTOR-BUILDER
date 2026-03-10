@@ -31,15 +31,20 @@ This tool is useful for analysts, quants, traders, and data engineers who need e
 
 ## 🛠️ Installation & Setup
 
-```bash
-git clone https://github.com/Arppittjaiin/YAHOO-STOCKS-SECTOR-BUILDER.git
-cd YAHOO-STOCKS-SECTOR-BUILDER
-pip install -r requirements.txt
 ```
 
-python yahootockssector/build_symbol_map.py
+### 🚀 Usage
 
-Make sure symbol_map.txt is present in the same folder as build_symbol_map.py.
+Run the script using the convenient batch file:
+- Simply double-click **`run.bat`**.
+
+Or manually:
+```bash
+pip install -r requirements.txt
+python build_symbol_map.py
+```
+
+Make sure **`symbol_map.txt`** is in the same folder as the script.
 
 Example input (symbol_map.txt)
 
